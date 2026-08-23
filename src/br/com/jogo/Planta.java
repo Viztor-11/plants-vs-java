@@ -2,7 +2,7 @@ package br.com.jogo;
 
 public abstract class Planta{
     private int custoSol;
-    private int vida;
+    protected int vida;
     private int recarga;
     private int linha,coluna;
     private int dano;
@@ -33,12 +33,19 @@ public abstract class Planta{
         return coluna;
     }
 
-   public abstract void iniciar();
+    public abstract void iniciar();
 
     public int getCustoSol(){
         return custoSol;
     }
 
+    public void receberDano(int dano){
+        vida -= dano;
+    }
+
+    public int getVida() {
+        return vida;
+    }
 }
 
 

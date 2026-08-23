@@ -7,6 +7,11 @@ public class Zumbi {
     private double velocidade;
     public static final int LARGURA = 50;
     public static final int ALTURA = 80;
+    private int dano = 100;
+    private long ultimoAtaque;
+    private int intervaloAtaque = 1000;
+
+
 
     public Zumbi(int posicaoX, int linha, double velocidade, int vida){
         this.posicaoX = posicaoX;
@@ -14,6 +19,20 @@ public class Zumbi {
         this.velocidade = velocidade;
         this.vida = vida;
     }
+
+    public boolean podeAtacar(){
+        if(System.currentTimeMillis() - ultimoAtaque >= intervaloAtaque){
+            return true;
+        }
+        return false;
+    }
+
+    public void registrarAtaque(){
+        ultimoAtaque = System.currentTimeMillis();
+    }
+
+
+
 
     public int getPosicaoX() {
         return posicaoX;
@@ -30,6 +49,8 @@ public class Zumbi {
     public double getVelocidade() {
         return velocidade;
     }
+
+    public int getDano(){return dano;}
 
     public void receberDano(int dano){
         vida -= dano;

@@ -32,6 +32,9 @@ public class PainelJogo extends JPanel{
     public PainelJogo(){
 
 
+
+
+
         zumbis.add(new Zumbi(900,2,0.001,270));
 
         cards.add(new CartaGirassol(10,10,80,80));
@@ -52,8 +55,20 @@ public class PainelJogo extends JPanel{
             for(Projetil p : projeteis){
                 p.mover();
             }
-            for(Zumbi z : zumbis){
-                z.mover();
+            for(Zumbi z : zumbis) {
+                Planta plantaAlvo = pegarPlantaEncostada(z);
+
+                if (plantaAlvo == null) {
+                    z.mover();
+                } else {
+                    if (z.podeAtacar()) {
+                        plantaAlvo.receberDano(z.getDano());
+                        z.registrarAtaque();
+                    }
+                    if(plantaAlvo.getVida() <= 0){
+                        plantas.remove(plantaAlvo);
+                    }
+                }
             }
             for(int i = projeteis.size() - 1; i >=0; i--){
                 Projetil p = projeteis.get(i);
@@ -168,6 +183,29 @@ public class PainelJogo extends JPanel{
 
     }
 
+    public boolean zumbiEncostou(Zumbi z){
+        for (Planta p : plantas){
+
+            int iniciaCelula = p.getColuna() * TamanhoCelula;
+            int fimCelula = iniciaCelula + TamanhoCelula;
+
+            if(p.getLinha() == z.getLinha() && z.getPosicaoX() > iniciaCelula && z.getPosicaoX() < fimCelula ){
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public Planta pegarPlantaEncostada(Zumbi z){
+        for(Planta p : plantas){
+            int iniciaCelula = p.getColuna() * TamanhoCelula;
+            int fimCelula = iniciaCelula + TamanhoCelula;
+            if(p.getLinha() == z.getLinha() && z.getPosicaoX() > iniciaCelula && z.getPosicaoX() < fimCelula ){
+                return p;
+            }
+        }
+        return null;
+    }
 
 
     public void gerarSol(int linha, int coluna) {
