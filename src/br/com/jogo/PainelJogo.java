@@ -9,6 +9,7 @@ import java.util.List;
 
 public class PainelJogo extends JPanel{
 
+    private int contadorOndaInicial;
     private int vidaParaProximaOnda = 0;
     private int vidaZumbisInicioOnda = 0;
     private int indiceZumbiOnda = 0;
@@ -33,12 +34,13 @@ public class PainelJogo extends JPanel{
     private int ondaAtual = 0;
     private final int TOTAL_ONDAS = 10;
     private List<TipoZumbi> zumbisOnda = new ArrayList<>();
-
-
-
-
-
-
+    private int contadorOnda;
+    private static final int CONTAGEM_PRIMEIRA_ONDA = 1800;
+    private Timer timerOnda;
+    private static final int CONTAGEM_ONDA_NORMAL = 2500;
+    private static final int VARIACAO_CONTAGEM_ONDA = 600;
+    private int ondaEmCampo = 0;
+    private int vidaOndaPreparada = 0;
 
     public PainelJogo(){
 
@@ -135,17 +137,33 @@ public class PainelJogo extends JPanel{
         });
         timerAnimacao.start();
 
+        contadorOnda = CONTAGEM_PRIMEIRA_ONDA;
+        contadorOndaInicial = CONTAGEM_PRIMEIRA_ONDA;
+
+        timerOnda = new Timer(10, e->{
+            if(contadorOnda > 0){
+                contadorOnda--;
+            }
+            if(contadorOnda == 0){
+                timerOnda.stop();
+                gerarOndaAtual();
+                prepararProximaContagem();
+                iniciarProximaOnda();
+            }
+        });
+        timerOnda.start();
+
         // ONDA DE ZUMBIS
 
         timerSpawnZumbi = new Timer(3000, e -> {
             gerarProximoZumbi();
 
+            if(todosZumbisEnviados()){
+                timerSpawnZumbi.stop();
+            }
         });
-        timerSpawnZumbi.setInitialDelay(20000);
 
         iniciarProximaOnda();
-        timerSpawnZumbi.start();
-
 
 
         MouseAdapter mouseHandler = new MouseAdapter() {
@@ -225,6 +243,25 @@ public class PainelJogo extends JPanel{
 
 
     }
+
+    public int calcularContagemOndaNormal(){
+        return CONTAGEM_ONDA_NORMAL + random.nextInt(VARIACAO_CONTAGEM_ONDA);
+    }
+
+    public void prepararProximaContagem(){
+        contadorOnda = calcularContagemOndaNormal();
+        contadorOndaInicial = contadorOnda;
+    }
+
+    public void gerarOndaAtual(){
+        ondaEmCampo = ondaAtual;
+        vidaZumbisInicioOnda = vidaOndaPreparada;
+        for(TipoZumbi tipo : zumbisOnda){
+            gerarZumbi(tipo);
+        }
+    }
+
+
     public void montarOndaAtual(){
         zumbisOnda.clear();
         indiceZumbiOnda = 0;
@@ -236,7 +273,8 @@ public class PainelJogo extends JPanel{
 
             pontosRestatantes -= Zumbi.VALOR_PONTOS;
         }
-        vidaZumbisInicioOnda = calcularVidaInicialOnda();
+        vidaOndaPreparada = calcularVidaInicialOnda();
+        vidaParaProximaOnda = vidaZumbisInicioOnda / 2;
 
 
     }
@@ -266,9 +304,11 @@ public class PainelJogo extends JPanel{
     }
 
     public int calcularVidaZumbis(){
-        int vidaAtual =0;
+        int vidaAtual = 0;
         for(Zumbi z : zumbis){
-            vidaAtual += z.getVida();
+            if(z.getOndaOrigem() == ondaEmCampo) {
+                vidaAtual += z.getVida();
+            }
         }
         return vidaAtual;
     }
@@ -335,7 +375,7 @@ public class PainelJogo extends JPanel{
         int linhaAleatoria = random.nextInt(linhas);
         int xInicial = colunas* TamanhoCelula + Zumbi.LARGURA / 2;
         if(tipo == TipoZumbi.NORMAL){
-            zumbis.add(new Zumbi(xInicial,linhaAleatoria, 5 ,270));
+            zumbis.add(new Zumbi(xInicial,linhaAleatoria, 5 ,270,ondaAtual));
         }
 
 

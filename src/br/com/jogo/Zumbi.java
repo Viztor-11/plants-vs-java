@@ -12,13 +12,14 @@ public class Zumbi {
     private int intervaloAtaque = 1000;
     public static  final int VALOR_PONTOS = 1;
     public static final int VIDA_NORMAL = 270;
+    private int ondaOrigem;
 
-
-    public Zumbi(int posicaoX, int linha, double velocidade, int vida){
+    public Zumbi(int posicaoX, int linha, double velocidade, int vida, int ondaOrigem){
         this.posicaoX = posicaoX;
         this.linha = linha;
         this.velocidade = velocidade;
         this.vida = vida;
+        this.ondaOrigem = ondaOrigem;
     }
 
     public boolean podeAtacar(){
@@ -32,8 +33,9 @@ public class Zumbi {
         ultimoAtaque = System.currentTimeMillis();
     }
 
-
-
+    public int getOndaOrigem() {
+        return ondaOrigem;
+    }
 
     public int getPosicaoX() {
         return posicaoX;
