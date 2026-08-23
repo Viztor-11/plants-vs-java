@@ -7,10 +7,11 @@ public class Zumbi {
     private double velocidade;
     public static final int LARGURA = 50;
     public static final int ALTURA = 80;
-    private int dano = 100;
+    private int dano = 80;
     private long ultimoAtaque;
     private int intervaloAtaque = 1000;
-
+    public static  final int VALOR_PONTOS = 1;
+    public static final int VIDA_NORMAL = 270;
 
 
     public Zumbi(int posicaoX, int linha, double velocidade, int vida){

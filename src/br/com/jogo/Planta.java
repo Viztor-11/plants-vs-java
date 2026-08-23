@@ -6,7 +6,7 @@ public abstract class Planta{
     private int recarga;
     private int linha,coluna;
     private int dano;
-
+    private long ultimoDano = 0;
 
 
 
@@ -19,11 +19,20 @@ public abstract class Planta{
 
     }
     public abstract void agir();
+    public abstract void parar();
 
     public void definirPosicao(int linha, int coluna){
         this.linha = linha;
         this.coluna = coluna;
     }
+
+    public boolean estaPiscando(){
+       return System.currentTimeMillis() - ultimoDano <= 200;
+    }
+
+
+
+
 
     public int getLinha() {
         return linha;
@@ -41,6 +50,7 @@ public abstract class Planta{
 
     public void receberDano(int dano){
         vida -= dano;
+        ultimoDano = System.currentTimeMillis();
     }
 
     public int getVida() {

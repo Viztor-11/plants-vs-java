@@ -32,5 +32,14 @@ public class Girassol extends Planta{
         painel.gerarSol(getLinha(),getColuna());
     }
 
+    @Override
+    public void parar() {
+        t.stop();
+    }
+
     private PainelJogo painel;
+
+
+
 }
+

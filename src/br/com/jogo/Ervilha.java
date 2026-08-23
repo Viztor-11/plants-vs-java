@@ -27,6 +27,11 @@ public class Ervilha extends Planta{
     }
 
     @Override
+    public void parar() {
+        timerAtaque.stop();
+    }
+
+    @Override
     public void iniciar() {
         timerAtaque.start();
     }

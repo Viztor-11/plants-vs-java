@@ -9,6 +9,9 @@ import java.util.List;
 
 public class PainelJogo extends JPanel{
 
+    private int vidaParaProximaOnda = 0;
+    private int vidaZumbisInicioOnda = 0;
+    private int indiceZumbiOnda = 0;
     private final int linhas = 5;
     private final int colunas = 9;
     private final int TamanhoCelula = 110;
@@ -24,6 +27,14 @@ public class PainelJogo extends JPanel{
     private Timer timerAnimacao;
     private List<Projetil> projeteis = new ArrayList<>();
     private List<Zumbi> zumbis = new ArrayList<>();
+    private boolean gameOver = false;
+    private Timer timerSpawnZumbi;
+    private int zumbisGerados = 0;
+    private int ondaAtual = 0;
+    private final int TOTAL_ONDAS = 10;
+    private List<TipoZumbi> zumbisOnda = new ArrayList<>();
+
+
 
 
 
@@ -32,10 +43,6 @@ public class PainelJogo extends JPanel{
     public PainelJogo(){
 
 
-
-
-
-        zumbis.add(new Zumbi(900,2,0.001,270));
 
         cards.add(new CartaGirassol(10,10,80,80));
         cards.add(new CartaErvilha(100,10,80,80));
@@ -65,8 +72,20 @@ public class PainelJogo extends JPanel{
                         plantaAlvo.receberDano(z.getDano());
                         z.registrarAtaque();
                     }
+
                     if(plantaAlvo.getVida() <= 0){
+                        plantaAlvo.parar();
                         plantas.remove(plantaAlvo);
+                    }
+                }
+                if(zumbiChegouCasa(z)){
+                    gameOver = true;
+                    timerAnimacao.stop();
+                    timerSpawnZumbi.stop();
+
+
+                    for(Planta p : plantas){
+                        p.parar();
                     }
                 }
             }
@@ -116,11 +135,27 @@ public class PainelJogo extends JPanel{
         });
         timerAnimacao.start();
 
+        // ONDA DE ZUMBIS
+
+        timerSpawnZumbi = new Timer(3000, e -> {
+            gerarProximoZumbi();
+
+        });
+        timerSpawnZumbi.setInitialDelay(20000);
+
+        iniciarProximaOnda();
+        timerSpawnZumbi.start();
+
+
 
         MouseAdapter mouseHandler = new MouseAdapter() {
 
             @Override
             public void mousePressed(MouseEvent e)  {
+                if(gameOver){
+                    return;
+                }
+
                 int x = e.getX();
                 int y = e.getY();
                 for(CartaPlanta carta : cards){
@@ -148,6 +183,10 @@ public class PainelJogo extends JPanel{
             }
             @Override
             public void mouseDragged(MouseEvent e){
+                if(gameOver){
+                    return;
+                }
+
                 if (plantaArrastada != null){
                     mouseX = e.getX();
                     mouseY = e.getY();
@@ -158,6 +197,10 @@ public class PainelJogo extends JPanel{
 
             @Override
             public void mouseReleased(MouseEvent e){
+                if(gameOver){
+                    return;
+                }
+
                 if (plantaArrastada != null){
                     int x = e.getX();
                     int y = e.getY();
@@ -182,6 +225,74 @@ public class PainelJogo extends JPanel{
 
 
     }
+    public void montarOndaAtual(){
+        zumbisOnda.clear();
+        indiceZumbiOnda = 0;
+
+        int pontosRestatantes = calcularPontosOnda();
+
+        while(pontosRestatantes >= Zumbi.VALOR_PONTOS){
+            zumbisOnda.add(TipoZumbi.NORMAL);
+
+            pontosRestatantes -= Zumbi.VALOR_PONTOS;
+        }
+        vidaZumbisInicioOnda = calcularVidaInicialOnda();
+
+
+    }
+
+    public void iniciarProximaOnda(){
+        if(ondaAtual < TOTAL_ONDAS){
+            proximaOnda();
+
+            montarOndaAtual();
+
+        }
+    }
+
+    public boolean todosZumbisEnviados(){
+        return indiceZumbiOnda >= zumbisOnda.size();
+    }
+
+    public int calcularVidaInicialOnda() {
+        int vidaTotal = 0;
+
+        for (TipoZumbi tipo : zumbisOnda) {
+            if(tipo == TipoZumbi.NORMAL){
+                vidaTotal += Zumbi.VIDA_NORMAL;
+            }
+        }
+        return vidaTotal;
+    }
+
+    public int calcularVidaZumbis(){
+        int vidaAtual =0;
+        for(Zumbi z : zumbis){
+            vidaAtual += z.getVida();
+        }
+        return vidaAtual;
+    }
+
+
+
+    public boolean ehOndaBandeirann(){
+        return ondaAtual > 0 && ondaAtual % 10 == 0;
+    }
+
+    public void proximaOnda(){
+        ondaAtual++;
+    }
+
+    public int calcularPontosOnda(){
+
+        int indiceOnda = ondaAtual -1;
+        int pontos = indiceOnda /3 + 1;
+        if(ehOndaBandeirann()){
+            pontos =(int)(pontos * 2.5);
+        }
+        return pontos;
+    }
+
 
     public boolean zumbiEncostou(Zumbi z){
         for (Planta p : plantas){
@@ -196,16 +307,51 @@ public class PainelJogo extends JPanel{
         return false;
     }
 
+    public boolean zumbiChegouCasa(Zumbi z){
+        if(z.getPosicaoX() <=0 ){
+            return true;
+        }
+        return false;
+    }
+
+
     public Planta pegarPlantaEncostada(Zumbi z){
+
         for(Planta p : plantas){
-            int iniciaCelula = p.getColuna() * TamanhoCelula;
-            int fimCelula = iniciaCelula + TamanhoCelula;
-            if(p.getLinha() == z.getLinha() && z.getPosicaoX() > iniciaCelula && z.getPosicaoX() < fimCelula ){
+            int centroXPlanta = p.getColuna() * TamanhoCelula + TamanhoCelula /2;
+            int bordaDireita = centroXPlanta + 25;
+            int bordaEsquerdaZumbi = z.getPosicaoX() - Zumbi.LARGURA / 2;
+            if(p.getLinha() == z.getLinha()
+            && z.getPosicaoX() > centroXPlanta
+            && bordaEsquerdaZumbi <= bordaDireita){
                 return p;
             }
         }
         return null;
     }
+
+    public void gerarZumbi(TipoZumbi tipo){
+
+        int linhaAleatoria = random.nextInt(linhas);
+        int xInicial = colunas* TamanhoCelula + Zumbi.LARGURA / 2;
+        if(tipo == TipoZumbi.NORMAL){
+            zumbis.add(new Zumbi(xInicial,linhaAleatoria, 5 ,270));
+        }
+
+
+    }
+
+    public void gerarProximoZumbi(){
+        if(indiceZumbiOnda < zumbisOnda.size()){
+
+            TipoZumbi tipo = zumbisOnda.get(indiceZumbiOnda);
+            gerarZumbi(tipo);
+            indiceZumbiOnda++;
+        }
+    }
+
+
+
 
 
     public void gerarSol(int linha, int coluna) {
@@ -263,7 +409,12 @@ public class PainelJogo extends JPanel{
             int coluna = p.getColuna();
             int centroX = coluna * TamanhoCelula + TamanhoCelula/2;
             int centroY= linha * TamanhoCelula + TamanhoCelula/2 + alturaBarraSuperior;
-            g.setColor(Color.YELLOW);
+
+            if(p.estaPiscando()){
+                g.setColor(Color.WHITE);
+            }else{
+                g.setColor(Color.YELLOW);
+            }
             g.fillOval(centroX - 25, centroY -25, 50, 50);
         }
 
@@ -309,6 +460,10 @@ public class PainelJogo extends JPanel{
 
             g.setColor(Color.YELLOW);
             g.fillOval(mouseX - 25, mouseY -25,50,50);
+        }
+        if(gameOver){
+            g.setColor(Color.RED);
+            g.drawString("FIM DE JOGO", 450,350);
         }
 
     }
