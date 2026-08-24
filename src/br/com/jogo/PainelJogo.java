@@ -9,6 +9,7 @@ import java.util.List;
 
 public class PainelJogo extends JPanel{
 
+    private List<TipoZumbi> filaSpawn = new ArrayList<>();
     private List<Zumbi> zumbisParaRemover = new ArrayList<>();
     private static final int PA_X = 200;
     private static final int PA_Y = 10;
@@ -58,6 +59,9 @@ public class PainelJogo extends JPanel{
     private static final int DURACAO_TICK_SOL_MS = 10;
     private CartaPlanta cartaArrastada = null;
     private List<CortadorGrama> cortadores = new ArrayList<>();
+    private Timer timerSpawn;
+    private boolean ondaAtiva = false;
+
 
 
 
@@ -118,7 +122,7 @@ public class PainelJogo extends JPanel{
                 }
 
                 //checagem de Game Over
-                if(zumbiChegouCasa(z)){
+                if(zumbiChegouCasa(z) && !zumbisParaRemover.contains(z)){
 
                     CortadorGrama cortadorCasa = pegarCortadorDaLinha(z.getLinha());
 
@@ -228,14 +232,20 @@ public class PainelJogo extends JPanel{
 
                 atualizarContagemComDano();
             }
-            if(contadorOnda == 0){
+
+            if(ondaAtiva && ondaTerminou()) {
+                ondaAtiva = false;
+
+                if (!ultimaOnda()) {
+                    prepararProximaOnda();
+                }
+            }
+
+            if(contadorOnda == 0 && !ondaAtiva){
                 gerarOndaAtual();
 
-                if(!ultimaOnda()){
-                    prepararProximaContagem();
-                    iniciarProximaOnda();
-                }else{
-                    timerOnda.stop();
+                if(ultimaOnda()){
+                   timerOnda.stop();
                 }
             }
         });
@@ -249,6 +259,24 @@ public class PainelJogo extends JPanel{
             timerSolCeu.setDelay(proximoSol);
         });
         timerSolCeu.start();
+
+        timerSpawn = new Timer(2000, e -> {
+
+            if(!filaSpawn.isEmpty()){
+
+                TipoZumbi tipo = filaSpawn.remove(0);
+                gerarZumbi(tipo);
+                timerSpawn.setDelay(calcularIntervaloSpawn());
+
+            }else{
+                timerSpawn.stop();
+            }
+        });
+
+        timerSpawn.setInitialDelay(0);
+
+
+
 
         // ONDA DE ZUMBIS
 
@@ -366,6 +394,28 @@ public class PainelJogo extends JPanel{
 
 
     }
+
+
+    public boolean ondaTerminouDeEntrar(){
+        return filaSpawn.isEmpty() && !timerSpawn.isRunning();
+    }
+
+    public void prepararProximaOnda(){
+
+        if(ondaAtual < TOTAL_ONDAS){
+
+            iniciarProximaOnda();
+            prepararProximaContagem();
+
+        }
+    }
+
+    public boolean ondaTerminou(){
+
+        return ondaTerminouDeEntrar()
+                && zumbis.isEmpty();
+    }
+
     public int calcularIntervaloProximoSol(){
 
         int contagem = CONTAGEM_SOL + random.nextInt(VARIACAO_CONTAGEM_SOL);
@@ -393,6 +443,10 @@ public class PainelJogo extends JPanel{
         return null;
     }
 
+    public int calcularIntervaloSpawn(){
+        return 1500 + random.nextInt(1501);
+    }
+
     public boolean zumbiEncostouCortador(Zumbi z, CortadorGrama cortador){
 
         int bordaEsquerdaZumbi =
@@ -418,13 +472,15 @@ public class PainelJogo extends JPanel{
     }
 
     public void gerarOndaAtual(){
+
+        ondaAtiva = true;
         ondaEmCampo = ondaAtual;
         vidaZumbisInicioOnda = vidaOndaPreparada;
         vidaDestruidaRegistrada = 0;
 
-        for(TipoZumbi tipo : zumbisOnda){
-            gerarZumbi(tipo);
-        }
+        filaSpawn.clear();
+        filaSpawn.addAll(zumbisOnda);
+        timerSpawn.start();
     }
 
     public int calcularNovoDanoOnda(){
