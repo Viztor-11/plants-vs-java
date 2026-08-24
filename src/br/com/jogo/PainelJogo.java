@@ -41,7 +41,9 @@ public class PainelJogo extends JPanel{
     private static final int CONTAGEM_MINIMA_ONDA = 400;
     private int vidaDestruidaRegistrada = 0;
     private long ultimaAtualizacaoOnda;
-
+    private static final int BARRA_LARGURA = 300;
+    private static final int BARRA_ALTURA = 20;
+    private static final int MARGEM_BARRA = 20;
 
 
 
@@ -461,6 +463,45 @@ public class PainelJogo extends JPanel{
         return vidaZumbisInicioOnda - calcularVidaZumbis();
     }
 
+    public void gerarSolceu(){
+        int minimoX = TamanhoSol /2;
+        int maximoX = colunas * TamanhoCelula - TamanhoSol / 2;
+
+        int xAleatorio = random.nextInt(minimoX, maximoX+1);
+        int yInicial = alturaBarraSuperior - TamanhoSol;
+        int minimoY = alturaBarraSuperior + TamanhoSol /2;
+        int maximoY = alturaBarraSuperior + linhas * TamanhoCelula - TamanhoSol /2;
+        int yDestino = random.nextInt(minimoY, maximoY+1);
+
+        sols.add(new Sol(xAleatorio, yInicial,xAleatorio,yDestino,TipoSol.CEU));
+
+    }
+
+
+    public double calcularProgressoFase(){
+
+        if(ultimaOnda()){
+            return 1.0;
+        }
+
+        if(ondaEmCampo == 0){
+            return (1.0 - (double) contadorOnda / contadorOndaInicial) / TOTAL_ONDAS;
+        }
+
+        double progressoOndasConcluidas =
+                (double) (ondaEmCampo - 1) / TOTAL_ONDAS;
+
+        double progressoOndaAtual = 0;
+
+        if(contadorOndaInicial > 0) {
+            progressoOndaAtual =
+                    1.0 - ((double) contadorOnda / contadorOndaInicial);
+
+            progressoOndaAtual /= TOTAL_ONDAS;
+        }
+
+        return progressoOndasConcluidas + progressoOndaAtual;
+    }
 
 
 
@@ -487,7 +528,7 @@ public class PainelJogo extends JPanel{
             destinoY = maximoY;
         }
 
-        sols.add(new Sol(centroX,centroY,destinoX,destinoY));
+        sols.add(new Sol(centroX,centroY,destinoX,destinoY,TipoSol.GIRASSOL));
         repaint();
     }
 
@@ -507,6 +548,7 @@ public class PainelJogo extends JPanel{
 
 
 
+
         for(int i = 0; i < linhas;i++){
             g.setColor(Color.RED);
             for(int c = 0; c <colunas;c++){
@@ -514,6 +556,10 @@ public class PainelJogo extends JPanel{
                 g.drawRect(c*TamanhoCelula,i * TamanhoCelula + alturaBarraSuperior,TamanhoCelula,TamanhoCelula);
             }
         }
+
+
+
+
         for(Planta p : plantas){
             int linha = p.getLinha();
             int coluna = p.getColuna();
@@ -584,6 +630,29 @@ public class PainelJogo extends JPanel{
             g.setColor(Color.YELLOW);
             g.drawString("VITORIA", 450, 350);
         }
+        int barraX = getWidth() - BARRA_LARGURA - MARGEM_BARRA;
+        int barraY = getHeight() - BARRA_ALTURA - MARGEM_BARRA;
+        double progresso = calcularProgressoFase();
+
+        int larguraProgresso = (int)(BARRA_LARGURA * progresso);
+
+        g.setColor(Color.DARK_GRAY);
+        g.fillRect(barraX, barraY, BARRA_LARGURA, BARRA_ALTURA);
+        g.setColor(Color.RED);
+        g.fillRect(
+                barraX,
+                barraY,
+                larguraProgresso,
+                BARRA_ALTURA
+        );
+        int posicaoFlag = barraX + BARRA_LARGURA;
+
+        g.setColor(Color.RED);
+        g.fillRect(posicaoFlag - 3,
+                barraY - 10,
+                6,
+                BARRA_ALTURA + 20);
+
 
     }
     private boolean posicaoValida(int mouseX,int mouseY){

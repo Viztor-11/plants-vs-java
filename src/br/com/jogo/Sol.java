@@ -10,12 +10,15 @@ public class Sol {
     private double gravidade = 0.2;
     private double velocidadeX;
     private long horaCriacao;
+    private TipoSol tipo;
 
-    public Sol(double posicaoX, double posicaoY,int destinoX,int destinoY) {
+    public Sol(double posicaoX, double posicaoY,int destinoX,int destinoY, TipoSol tipo) {
         this.posicaoX = posicaoX;
         this.posicaoY = posicaoY;
         this.destinoX = destinoX;
         this.destinoY = destinoY;
+        this.tipo = tipo;
+
         velocidadeX =(destinoX - posicaoX) / 40.0;
         horaCriacao = System.currentTimeMillis();
 
@@ -40,6 +43,13 @@ public class Sol {
     }
 
     public void mover(){
+        if(tipo == TipoSol.CEU){
+            moverSolCeu();
+            return;
+        }
+
+
+
         posicaoX = posicaoX + velocidadeX;
         //movimento y
         posicaoY = posicaoY + velocidadeY;
@@ -54,7 +64,15 @@ public class Sol {
             velocidadeX = 0;
         }
     }
+    private void moverSolCeu(){
+        if(posicaoY < destinoY){
+            posicaoY += 2;
+        }
 
+        if(posicaoY > destinoY){
+            posicaoY = destinoY;
+        }
+    }
     public boolean tempoFim(){
         long tempoPassado = System.currentTimeMillis() - horaCriacao;
 
