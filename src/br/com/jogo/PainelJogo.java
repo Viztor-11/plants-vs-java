@@ -9,6 +9,12 @@ import java.util.List;
 
 public class PainelJogo extends JPanel{
 
+
+    private static final int PA_X = 200;
+    private static final int PA_Y = 10;
+    private static final int PA_LARGURA = 80;
+    private static final int PA_ALTURA = 80;
+    private boolean paSelecionada = false;
     private int quantidadeSoisCeuGerados = 0;
     private int contadorOndaInicial;
     private int vidaZumbisInicioOnda = 0;
@@ -225,6 +231,32 @@ public class PainelJogo extends JPanel{
 
                 int x = e.getX();
                 int y = e.getY();
+
+                Rectangle areaPa = new Rectangle(PA_X,PA_Y,PA_LARGURA,PA_ALTURA);
+                if(areaPa.contains(x,y)){
+                    paSelecionada = !paSelecionada;
+                    repaint();
+                    return;
+                }
+                if(paSelecionada){
+                    int coluna = x / TamanhoCelula;
+                    int linha = (y - alturaBarraSuperior) / TamanhoCelula;
+
+                    for(int i = plantas.size() - 1; i >= 0; i--){
+                        Planta p = plantas.get(i);
+
+                        if(p.getLinha() == linha && p.getColuna() == coluna){
+                            p.parar();
+                            plantas.remove(i);
+                            paSelecionada = false;
+                            repaint();
+                            break;
+                        }
+                    }
+
+                }
+
+
                 for(CartaPlanta carta : cards){
 
                     if(carta.contem(x,y)
@@ -706,6 +738,18 @@ public class PainelJogo extends JPanel{
                 barraY - 10,
                 6,
                 BARRA_ALTURA + 20);
+
+
+        // pa
+        if(paSelecionada){
+            g.setColor(Color.YELLOW);
+        }else {
+            g.setColor(Color.GRAY);
+        }
+        g.fillRect(PA_X,PA_Y,PA_LARGURA,PA_ALTURA);
+
+        g.setColor(Color.BLACK);
+        g.drawString("PA", PA_X +30,PA_Y+45);
 
 
     }
