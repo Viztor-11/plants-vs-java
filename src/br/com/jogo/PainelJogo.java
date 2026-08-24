@@ -9,6 +9,7 @@ import java.util.List;
 
 public class PainelJogo extends JPanel{
 
+    private int quantidadeSoisCeuGerados = 0;
     private int contadorOndaInicial;
     private int vidaZumbisInicioOnda = 0;
     private final int linhas = 5;
@@ -44,8 +45,11 @@ public class PainelJogo extends JPanel{
     private static final int BARRA_LARGURA = 300;
     private static final int BARRA_ALTURA = 20;
     private static final int MARGEM_BARRA = 20;
-
-
+    private Timer timerSolCeu;
+    private static final int CONTAGEM_SOL = 425;
+    private static final int VARIACAO_CONTAGEM_SOL = 275;
+    private static final int CONTAGEM_MAXIMA_SOL = 950;
+    private static final int DURACAO_TICK_SOL_MS = 10;
 
 
     public PainelJogo(){
@@ -134,12 +138,14 @@ public class PainelJogo extends JPanel{
                             vitoria = true;
                             timerAnimacao.stop();
                             timerOnda.stop();
+                            timerSolCeu.stop();
                         }
                         if(zumbiChegouCasa(z)){
                             gameOver = true;
 
                             timerAnimacao.stop();
                             timerOnda.stop();
+                            timerSolCeu.stop();
 
                             for(Planta planta : plantas){
                                 planta.parar();
@@ -191,6 +197,15 @@ public class PainelJogo extends JPanel{
             }
         });
         timerOnda.start();
+
+        timerSolCeu = new Timer(10000, e -> {
+            gerarSolceu();
+            quantidadeSoisCeuGerados++;
+
+            int proximoSol = calcularIntervaloProximoSol();
+            timerSolCeu.setDelay(proximoSol);
+        });
+        timerSolCeu.start();
 
         // ONDA DE ZUMBIS
 
@@ -272,6 +287,16 @@ public class PainelJogo extends JPanel{
         addMouseListener(mouseHandler);
         addMouseMotionListener(mouseHandler);
 
+
+    }
+    public int calcularIntervaloProximoSol(){
+
+        int contagem = CONTAGEM_SOL + random.nextInt(VARIACAO_CONTAGEM_SOL);
+        contagem += quantidadeSoisCeuGerados * 10;
+        if(contagem > CONTAGEM_MAXIMA_SOL){
+            contagem = CONTAGEM_MAXIMA_SOL;
+        }
+        return contagem * DURACAO_TICK_SOL_MS;
 
     }
 
