@@ -8,6 +8,8 @@ public abstract class CartaPlanta {
     private int largura;
     private int altura;
     private int custo;
+    private int recarga;
+    private long ultimoUso = 0;
 
     public boolean contem(int mouseX, int mouseY){
         Rectangle areaCarta = new Rectangle(x,y,largura,altura);
@@ -18,13 +20,14 @@ public abstract class CartaPlanta {
     public int getCusto(){
         return custo;
     }
-    protected CartaPlanta(int x, int y, int largura, int altura, int custo){
+    protected CartaPlanta(int x, int y, int largura, int altura, int custo, int recarga){
 
         this.x = x;
         this.y = y;
         this.largura = largura;
         this.altura = altura;
         this.custo = custo;
+        this.recarga = recarga;
 
 
     }
@@ -41,6 +44,39 @@ public abstract class CartaPlanta {
         return altura;
     }
 
+    public boolean estaEmRecarga(){
+        long tempoAtual = System.currentTimeMillis();
+        long tempoPassado = tempoAtual - ultimoUso;
+
+        return tempoPassado < recarga;
+    }
+
+    public void iniciarRecarga(){
+        ultimoUso = System.currentTimeMillis();
+    }
+
+    public long getTempoRestanteRecarga(){
+        long tempoPassado = System.currentTimeMillis() - ultimoUso;
+        long restante = recarga - tempoPassado;
+
+        if(restante < 0){
+            return  0;
+        }
+        return  restante;
+    }
+
+    public double getProgressoRecarga(){
+        long tempoPassado = System.currentTimeMillis() - ultimoUso;
+        double progresso = (double) tempoPassado / recarga;
+
+        if(progresso > 1.0){
+            progresso = 1.0;
+        }
+        return progresso;
+    }
+    public boolean podeComprar(int quantidadeSol){
+        return quantidadeSol >= custo;
+    }
 
 
 

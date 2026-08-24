@@ -50,6 +50,9 @@ public class PainelJogo extends JPanel{
     private static final int VARIACAO_CONTAGEM_SOL = 275;
     private static final int CONTAGEM_MAXIMA_SOL = 950;
     private static final int DURACAO_TICK_SOL_MS = 10;
+    private CartaPlanta cartaArrastada = null;
+
+
 
 
     public PainelJogo(){
@@ -223,9 +226,15 @@ public class PainelJogo extends JPanel{
                 int x = e.getX();
                 int y = e.getY();
                 for(CartaPlanta carta : cards){
-                    if(carta.contem(x,y) && contadorSol >= carta.getCusto()){
+
+                    if(carta.contem(x,y)
+                            && carta.podeComprar(contadorSol)
+                            && !carta.estaEmRecarga()){
+
                         plantaArrastada = carta.criarPlanta(PainelJogo.this);
+                        cartaArrastada = carta;
                         break;
+
                     }
                 }
 
@@ -277,9 +286,11 @@ public class PainelJogo extends JPanel{
                         plantas.add(plantaArrastada);
                         plantaArrastada.iniciar();
                         contadorSol -= plantaArrastada.getCustoSol();
+                        cartaArrastada.iniciarRecarga();
 
                     }
                     plantaArrastada = null;
+                    cartaArrastada = null;
                     repaint();
                 }
             }
@@ -609,6 +620,24 @@ public class PainelJogo extends JPanel{
             g.fillRect(x,y,largura,altura);
             g.setColor(Color.BLACK);
             g.drawString(String.valueOf(carta.getCusto()),x + carta.getLargura () / 2,y + carta.getAltura() / 2);
+
+            if(!carta.podeComprar(contadorSol)&& !carta.estaEmRecarga()){
+                g.setColor(new Color(0,0,0,120));
+
+                g.fillRect(carta.getX(), carta.getY(), carta.getLargura(), carta.getAltura()
+                );
+            }
+
+            if(carta.estaEmRecarga()){
+                double progresso = carta.getProgressoRecarga();
+
+                int alturaEscura = (int)(carta.getAltura() * (1.0 - progresso));
+                int yEscuro = carta.getY() + carta.getAltura() - alturaEscura;
+
+                g.setColor(new Color(0,0,0,120));
+                g.fillRect(carta.getX(),yEscuro,carta.getLargura(),alturaEscura);
+            }
+
 
         }
 
