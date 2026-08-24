@@ -9,7 +9,7 @@ import java.util.List;
 
 public class PainelJogo extends JPanel{
 
-
+    private List<Zumbi> zumbisParaRemover = new ArrayList<>();
     private static final int PA_X = 200;
     private static final int PA_Y = 10;
     private static final int PA_LARGURA = 80;
@@ -57,12 +57,16 @@ public class PainelJogo extends JPanel{
     private static final int CONTAGEM_MAXIMA_SOL = 950;
     private static final int DURACAO_TICK_SOL_MS = 10;
     private CartaPlanta cartaArrastada = null;
-
+    private List<CortadorGrama> cortadores = new ArrayList<>();
 
 
 
     public PainelJogo(){
 
+
+        for(int linha = 0; linha < linhas; linha++){
+            cortadores.add(new CortadorGrama(linha, 20));
+        }
 
 
         cards.add(new CartaGirassol(10,10,80,80));
@@ -83,13 +87,16 @@ public class PainelJogo extends JPanel{
             for(Projetil p : projeteis){
                 p.mover();
             }
-            for(Zumbi z : zumbis) {
+
+            for(Zumbi z : zumbis){
+
                 Planta plantaAlvo = pegarPlantaEncostada(z);
 
-                if (plantaAlvo == null) {
+                if(plantaAlvo == null){
                     z.mover();
-                } else {
-                    if (z.podeAtacar()) {
+                }else{
+
+                    if(z.podeAtacar()){
                         plantaAlvo.receberDano(z.getDano());
                         z.registrarAtaque();
                     }
@@ -99,16 +106,54 @@ public class PainelJogo extends JPanel{
                         plantas.remove(plantaAlvo);
                     }
                 }
+
+                // verifica se encostou no cortador
+                CortadorGrama cortador = pegarCortadorDaLinha(z.getLinha());
+
+                if(cortador != null
+                        && !cortador.isAtivado()
+                        && zumbiEncostouCortador(z, cortador)){
+
+                    cortador.ativar();
+                }
+
+                //checagem de Game Over
                 if(zumbiChegouCasa(z)){
-                    gameOver = true;
-                    timerAnimacao.stop();
 
+                    CortadorGrama cortadorCasa = pegarCortadorDaLinha(z.getLinha());
 
-                    for(Planta p : plantas){
-                        p.parar();
+                    if(cortadorCasa == null){
+                        gameOver = true;
+
+                        timerAnimacao.stop();
+                        timerOnda.stop();
+                        timerSolCeu.stop();
+
+                        for(Planta planta : plantas){
+                            planta.parar();
+                        }
                     }
                 }
             }
+            for(CortadorGrama cortador : cortadores){
+                cortador.mover();
+                cortador.finalizarSeSaiu(getWidth());
+            }
+
+            //atropelar zumbis
+            for(CortadorGrama cortador : cortadores){
+                if(cortador.isAtivado()){
+
+                    for(int i = zumbis.size() - 1; i >= 0; i--){
+                        Zumbi z = zumbis.get(i);
+
+                        if(z.getLinha() == cortador.getLinha() && Math.abs(z.getPosicaoX() - cortador.getPosicaoX()) < 40){
+                            zumbisParaRemover.add(z);
+                        }
+                    }
+                }
+            }
+
             for(int i = projeteis.size() - 1; i >=0; i--){
                 Projetil p = projeteis.get(i);
 
@@ -149,25 +194,14 @@ public class PainelJogo extends JPanel{
                             timerOnda.stop();
                             timerSolCeu.stop();
                         }
-                        if(zumbiChegouCasa(z)){
-                            gameOver = true;
-
-                            timerAnimacao.stop();
-                            timerOnda.stop();
-                            timerSolCeu.stop();
-
-                            for(Planta planta : plantas){
-                                planta.parar();
-                            }
-                        }
-
                         break;
                     }
                 }
             }
 
 
-
+            zumbis.removeAll(zumbisParaRemover);
+            zumbisParaRemover.clear();
             repaint();
         });
         timerAnimacao.start();
@@ -345,6 +379,30 @@ public class PainelJogo extends JPanel{
 
     public boolean venceuJogo(){
         return ultimaOnda() && zumbis.isEmpty();
+    }
+
+    public CortadorGrama pegarCortadorDaLinha(int linha){
+
+        for(CortadorGrama cortador : cortadores){
+
+            if(cortador.getLinha() == linha && !cortador.isUsado()){
+                return cortador;
+            }
+        }
+
+        return null;
+    }
+
+    public boolean zumbiEncostouCortador(Zumbi z, CortadorGrama cortador){
+
+        int bordaEsquerdaZumbi =
+                z.getPosicaoX() - Zumbi.LARGURA / 2;
+
+        int bordaDireitaCortador =
+                cortador.getPosicaoX() + 20;
+
+        return z.getLinha() == cortador.getLinha()
+                && bordaEsquerdaZumbi <= bordaDireitaCortador;
     }
 
 
@@ -625,8 +683,21 @@ public class PainelJogo extends JPanel{
             }
         }
 
+        for(CortadorGrama cortador : cortadores){
 
+            if(!cortador.isUsado() || cortador.isAtivado()){
 
+                int x = cortador.getPosicaoX();
+                int linha = cortador.getLinha();
+
+                int y = linha * TamanhoCelula
+                        + TamanhoCelula / 2
+                        + alturaBarraSuperior;
+
+                g.setColor(Color.ORANGE);
+                g.fillRect(x - 20, y - 15, 40, 30);
+            }
+        }
 
         for(Planta p : plantas){
             int linha = p.getLinha();
