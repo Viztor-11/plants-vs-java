@@ -75,7 +75,7 @@ public class PainelJogo extends JPanel{
 
         cards.add(new CartaGirassol(10,10,80,80));
         cards.add(new CartaErvilha(100,10,80,80));
-
+        cards.add(new CartaNoz(290,10,80,80));
 
         timerAnimacao = new Timer(16, e -> {
             for(Sol s : sols){
@@ -128,7 +128,7 @@ public class PainelJogo extends JPanel{
 
                     if(cortadorCasa == null){
                         gameOver = true;
-
+                        timerSpawn.stop();
                         timerAnimacao.stop();
                         timerOnda.stop();
                         timerSolCeu.stop();
@@ -194,6 +194,10 @@ public class PainelJogo extends JPanel{
                         }
                         if(venceuJogo()) {
                             vitoria = true;
+                            for(Planta pl : plantas){
+                                pl.parar();
+                            }
+                            timerSpawn.stop();
                             timerAnimacao.stop();
                             timerOnda.stop();
                             timerSolCeu.stop();
@@ -428,7 +432,8 @@ public class PainelJogo extends JPanel{
     }
 
     public boolean venceuJogo(){
-        return ultimaOnda() && zumbis.isEmpty();
+
+        return ultimaOnda() && ondaTerminou();
     }
 
     public CortadorGrama pegarCortadorDaLinha(int linha){
@@ -622,7 +627,7 @@ public class PainelJogo extends JPanel{
     public void gerarZumbi(TipoZumbi tipo){
 
         int linhaAleatoria = random.nextInt(linhas);
-        int xInicial = colunas* TamanhoCelula + Zumbi.LARGURA / 2;
+        int xInicial = colunas * TamanhoCelula + Zumbi.LARGURA / 2 + random.nextInt(101);
 
         if(tipo == TipoZumbi.NORMAL){
             zumbis.add(new Zumbi(xInicial,linhaAleatoria, 5 ,270,ondaEmCampo));
@@ -760,6 +765,33 @@ public class PainelJogo extends JPanel{
             int coluna = p.getColuna();
             int centroX = coluna * TamanhoCelula + TamanhoCelula/2;
             int centroY= linha * TamanhoCelula + TamanhoCelula/2 + alturaBarraSuperior;
+
+            if(p instanceof Noz){
+
+                Noz noz = (Noz) p;
+
+                double porcentagemVida = noz.getPocentagemVida();
+                if(p.estaPiscando()){
+                    g.setColor(Color.WHITE);
+                } else if (porcentagemVida > 0.66) {
+                    g.setColor(Color.ORANGE);
+                }else if(porcentagemVida > 0.33){
+                    g.setColor(Color.GRAY);
+                }else{
+                    g.setColor(Color.DARK_GRAY);
+                }
+
+
+                g.fillOval(
+                        centroX - 30,
+                        centroY - 35,
+                        60,
+                        70
+                );
+
+                continue;
+            }
+
 
             if(p.estaPiscando()){
                 g.setColor(Color.WHITE);

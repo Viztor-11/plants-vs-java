@@ -57,6 +57,3 @@ public abstract class Planta{
         return vida;
     }
 }
-
-
-
